@@ -23,10 +23,12 @@ class UserRepository(IUserRepository):
     def fetch_all_users(self):
         return list(self._store.values())
     
-    def update_a_user(self,user_id,updated_user):
-         if user_id in self._store:
-              self._store[user_id] = updated_user
-              return updated_user
+    def update_a_user(self, user_id, updated_user):
+        if user_id in self._store:
+            self._store[user_id] = updated_user
+            self._email_index[updated_user.email] = user_id
+            return updated_user
+        return None
        
     
     def delete_a_user(self, user_id):
@@ -50,6 +52,24 @@ class UserRepository(IUserRepository):
         user_id = self._email_index.get(email)
         if user_id:
             return self._store.get(user_id)
+        return None
+
+    def has_role_access(self, user_id, allowed_roles):
+        user = self._store.get(user_id)
+        if not user or user.is_deleted or not user.is_active:
+            return False
+
+        if isinstance(allowed_roles, str):
+            allowed_role_set = {allowed_roles.lower()}
+        else:
+            allowed_role_set = {role.lower() for role in allowed_roles}
+
+        if isinstance(user.roles, str):
+            user_roles = [user.roles]
+        else:
+            user_roles = user.roles or []
+
+        return any(role.lower() in allowed_role_set for role in user_roles)
        
 
        

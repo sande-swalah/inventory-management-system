@@ -81,3 +81,6 @@ class UserService:
 
         return user.to_dict()
 
+    def has_role_access(self, user_id, allowed_roles):
+        return self.repo.has_role_access(user_id, allowed_roles)
+

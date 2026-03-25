@@ -20,9 +20,8 @@ class User:
             "first_name": self.first_name,
             "last_name": self.last_name,
             "email": self.email,
-            "password": self.password,
             "roles": self.roles,
             "is_active": self.is_active,
             "is_deleted": self.is_deleted,
-            "created_on": self.created_on,
+            "created_on": self.created_on.isoformat() if self.created_on else None,
         }
