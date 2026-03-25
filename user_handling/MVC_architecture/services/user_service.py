@@ -1,0 +1,83 @@
+from datetime import datetime
+from ..models.user_model import User
+from ..interfaces.user_interface import IUserRepository
+
+
+class UserService:
+
+    def __init__(self, repo: IUserRepository):
+        self.repo = repo
+
+    def get_all_users(self):
+        users_list = self.repo.fetch_all_users()
+        return [user.to_dict() for user in users_list]
+
+    def get_user(self, user_id):
+        return self.repo.fetch_a_single_user(user_id)
+
+    def delete(self, user_id):
+        return self.repo.delete_a_user(user_id)
+
+    def restore(self, user_id):
+        user = self.repo.restore_deleted_user(user_id)
+        if user:
+            return user.to_dict()
+        return None
+
+    def register(self, data):
+        first_name = data.get("first_name")
+        last_name = data.get("last_name")
+        email = data.get("email")
+        password = data.get("password")
+        roles = data.get("roles", ["user"])
+
+        user = User(
+            id=None,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            password=password,
+            is_active=True,
+            is_deleted=False,
+            roles=roles,
+            created_on=datetime.now(),
+        )
+        stored_user = self.repo.register_user(user)
+        return stored_user.to_dict()
+
+    def update(self, user_id, data):
+        existing = self.repo.fetch_a_single_user(user_id)
+        if not existing:
+            return None
+        updated_user = User(
+            id=user_id,
+            first_name=data.get("first_name", existing["first_name"]),
+            last_name=data.get("last_name", existing["last_name"]),
+            email=data.get("email", existing["email"]),
+            password=data.get("password", existing["password"]),
+            is_active=data.get("is_active", existing["is_active"]),
+            is_deleted=data.get("is_deleted", existing["is_deleted"]),
+            roles=data.get("roles", existing["roles"]),
+            created_on=existing["created_on"],
+        )
+        result = self.repo.update_a_user(user_id, updated_user)
+        if result:
+            return result.to_dict()
+        return None
+
+    def login(self, data):
+        email = data.get("email")
+        password = data.get("password")
+
+        if not email or not password:
+            raise ValueError("email and password are required")
+
+        user = self.repo.fetch_user_by_email(email)
+        if not user:
+            return None
+
+        if user.password != password:
+            return None
+
+        return user.to_dict()
+
