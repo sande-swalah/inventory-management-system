@@ -28,7 +28,7 @@ def register_user_route():
 
 @user_blueprint.post("/users/login")
 def login_user_route():
-    data = request.get_json(silent=True) or {}
+    data = request.get_json
     try:
         user = user_controller.login(data)
     except ValueError as error:
@@ -41,7 +41,7 @@ def login_user_route():
 
 @user_blueprint.put("/users/<int:user_id>")
 def update_user_route(user_id):
-    data = request.get_json(silent=True) or {}
+    data = request.get_json
     updated_user = user_controller.update(user_id, data)
     if not updated_user:
         return jsonify({"error": "User not found"}), 404
