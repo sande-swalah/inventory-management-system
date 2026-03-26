@@ -29,8 +29,5 @@ class UserController:
         return self.service.restore(user_id)
 
 
-user_repository = UserRepository()
-user_service = UserService(user_repository)
-user_controller = UserController(user_service)
 
 

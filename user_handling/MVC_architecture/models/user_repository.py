@@ -1,9 +1,5 @@
-from ..interfaces.user_interface import UserInterface
 
-
-
-
-class UserRepository(UserInterface):
+class UserRepository:
     def __init__(self):
         self._store = {}
         self._deleted_user = {}
@@ -20,7 +16,7 @@ class UserRepository(UserInterface):
         user = self._store.get(user_id)
         if user:
             return user.to_dict()
-        return None
+        
         
 
     def fetch_all_users(self):
@@ -31,7 +27,7 @@ class UserRepository(UserInterface):
             self._store[user_id] = updated_user
             self._email_index[updated_user.email] = user_id
             return updated_user
-        return None
+        
        
     
     def delete_a_user(self, user_id):
@@ -40,8 +36,7 @@ class UserRepository(UserInterface):
             self._deleted_user[user_id] = deleted_user
             if deleted_user.email in self._email_index:
                 del self._email_index[deleted_user.email]
-            return True
-        return False
+
        
 
     def restore_deleted_user(self, user_id):
@@ -50,14 +45,7 @@ class UserRepository(UserInterface):
             self._store[user_id] = user
             self._email_index[user.email] = user_id
             return user
-        return None
    
-
-    def fetch_user_by_email(self, email):
-        user_id = self._email_index.get(email)
-        if user_id:
-            return self._store.get(user_id)
-        return None
 
 
     

@@ -29,8 +29,7 @@ def login_user():
     print(f"This is login data: {data}")
     email = data.get("email")
     password = data.get("password")
-    
+
     user = user_controller.login(data)
-    if not user:
-        return jsonify({"error": "Invalid email or password"}), 401
+    
     return jsonify(user), 200

@@ -1,6 +1,6 @@
 from datetime import datetime
 from ..models.user_domain import User
-from ..interfaces.user_interface import IUserRepository
+from ..interfaces.user_interface import UserInterface
 
 
 class UserService:
@@ -53,19 +53,6 @@ class UserService:
         if incoming is None:
             return ["user"]
 
-        
-
-        cleaned = []
-        for role in incoming:
-            normalized = str(role).strip().lower()
-            if normalized in self.roles and normalized not in cleaned:
-                cleaned.append(normalized)
-
-        if not cleaned:
-            return ["user"]
-
-        return cleaned
-
     def update(self, user_id, data):
         existing = self.repo.fetch_a_single_user(user_id)
         if not existing:
@@ -96,6 +83,4 @@ class UserService:
 
         return user.to_dict()
 
-    def has_role_access(self, user_id, allowed_roles):
-        return self.repo.has_role_access(user_id, allowed_roles)
-
+    
