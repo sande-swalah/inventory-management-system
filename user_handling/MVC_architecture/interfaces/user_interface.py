@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class IUserRepository(ABC):
+class UserInterface(ABC):
 
     @abstractmethod
     def register_user(self, user):
@@ -34,3 +34,5 @@ class IUserRepository(ABC):
     @abstractmethod
     def has_role_access(self, user_id, allowed_roles):
         pass
+
+

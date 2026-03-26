@@ -1,11 +1,13 @@
 from datetime import datetime
-from ..models.user_model import User
+from ..models.user_domain import User
 from ..interfaces.user_interface import IUserRepository
 
 
 class UserService:
 
-    def __init__(self, repo: IUserRepository):
+    roles = {"user", "manager", "staff"}
+
+    def __init__(self, repo):
         self.repo = repo
 
     def get_all_users(self):
@@ -22,14 +24,14 @@ class UserService:
         user = self.repo.restore_deleted_user(user_id)
         if user:
             return user.to_dict()
-        return None
+        
 
     def register(self, data):
         first_name = data.get("first_name")
         last_name = data.get("last_name")
         email = data.get("email")
         password = data.get("password")
-        roles = data.get("roles", ["user"])
+        roles = self._assign_roles_on_register(data)
 
         user = User(
             id=None,
@@ -44,6 +46,25 @@ class UserService:
         )
         stored_user = self.repo.register_user(user)
         return stored_user.to_dict()
+
+    def _assign_roles_on_register(self, data):
+        incoming = data.get("roles")
+
+        if incoming is None:
+            return ["user"]
+
+        
+
+        cleaned = []
+        for role in incoming:
+            normalized = str(role).strip().lower()
+            if normalized in self.roles and normalized not in cleaned:
+                cleaned.append(normalized)
+
+        if not cleaned:
+            return ["user"]
+
+        return cleaned
 
     def update(self, user_id, data):
         existing = self.repo.fetch_a_single_user(user_id)
@@ -69,15 +90,9 @@ class UserService:
         email = data.get("email")
         password = data.get("password")
 
-        if not email or not password:
-            raise ValueError("email and password are required")
 
         user = self.repo.fetch_user_by_email(email)
-        if not user:
-            return None
-
-        if user.password != password:
-            return None
+        
 
         return user.to_dict()
 

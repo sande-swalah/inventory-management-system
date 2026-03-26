@@ -1,7 +1,9 @@
-from ..interfaces.user_interface import IUserRepository
+from ..interfaces.user_interface import UserInterface
 
 
-class UserRepository(IUserRepository):
+
+
+class UserRepository(UserInterface):
     def __init__(self):
         self._store = {}
         self._deleted_user = {}
@@ -18,6 +20,7 @@ class UserRepository(IUserRepository):
         user = self._store.get(user_id)
         if user:
             return user.to_dict()
+        return None
         
 
     def fetch_all_users(self):
@@ -38,6 +41,7 @@ class UserRepository(IUserRepository):
             if deleted_user.email in self._email_index:
                 del self._email_index[deleted_user.email]
             return True
+        return False
        
 
     def restore_deleted_user(self, user_id):
@@ -47,6 +51,7 @@ class UserRepository(IUserRepository):
             self._email_index[user.email] = user_id
             return user
         return None
+   
 
     def fetch_user_by_email(self, email):
         user_id = self._email_index.get(email)
@@ -54,24 +59,5 @@ class UserRepository(IUserRepository):
             return self._store.get(user_id)
         return None
 
-    def has_role_access(self, user_id, allowed_roles):
-        user = self._store.get(user_id)
-        if not user or user.is_deleted or not user.is_active:
-            return False
-
-        if isinstance(allowed_roles, str):
-            allowed_role_set = {allowed_roles.lower()}
-        else:
-            allowed_role_set = {role.lower() for role in allowed_roles}
-
-        if isinstance(user.roles, str):
-            user_roles = [user.roles]
-        else:
-            user_roles = user.roles or []
-
-        return any(role.lower() in allowed_role_set for role in user_roles)
-       
-
-       
 
     

@@ -23,5 +23,5 @@ class User:
             "roles": self.roles,
             "is_active": self.is_active,
             "is_deleted": self.is_deleted,
-            "created_on": self.created_on.isoformat() if self.created_on else None,
+            "created_on": self.created_on
         }
