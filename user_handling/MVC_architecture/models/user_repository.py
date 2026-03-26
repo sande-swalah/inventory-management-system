@@ -47,5 +47,13 @@ class UserRepository:
             return user
    
 
+    def has_role_access(self, user_id, allowed_roles):
+        user = self._store.get(user_id)
+        
+        if isinstance(allowed_roles, str):
+            allowed = {allowed_roles.strip().lower()}
+        else:
+            allowed = {str(role).strip().lower() for role in allowed_roles}
 
-    
+        user_roles = user.roles if isinstance(user.roles, list) else [user.roles]
+        return any(str(role).strip().lower() in allowed for role in user_roles)

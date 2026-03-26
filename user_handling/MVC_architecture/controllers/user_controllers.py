@@ -28,6 +28,10 @@ class UserController:
     def restore(self, user_id):
         return self.service.restore(user_id)
 
+    def has_role_access(self, user_id, allowed_roles):
+        return self.service.has_role_access(user_id, allowed_roles)
 
 
-
+user_repository = UserRepository()
+user_service = UserService(user_repository)
+user_controller = UserController(user_service)
