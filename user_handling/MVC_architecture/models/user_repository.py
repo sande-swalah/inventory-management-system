@@ -19,7 +19,7 @@ class UserRepository:
                 user.password,
                 user.is_active,
                 user.is_deleted,
-                user.roles,
+                json.dumps(user.roles) if isinstance(user.roles, list) else user.roles,
                 user.created_on
             ),
         )
