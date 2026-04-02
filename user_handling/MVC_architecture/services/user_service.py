@@ -4,14 +4,13 @@ from ..models.user_domain import User
 
 class UserService:
 
-    roles = {"user", "manager", "staff"}
+    roles = {"user", "manager", "staff", "supplier", "admin", "guest"}
 
     def __init__(self, repo):
         self.repo = repo
 
     def get_all_users(self):
-        users_list = self.repo.fetch_all_users()
-        return [user.to_dict() for user in users_list]
+        return self.repo.fetch_all_users()
 
     def get_user(self, user_id):
         return self.repo.fetch_a_single_user(user_id)
@@ -20,10 +19,7 @@ class UserService:
         return self.repo.delete_a_user(user_id)
 
     def restore(self, user_id):
-        user = self.repo.restore_deleted_user(user_id)
-        if user:
-            return user.to_dict()
-        
+        return self.repo.restore_deleted_user(user_id)
 
     def register(self, data):
         first_name = data.get("first_name")
@@ -44,7 +40,7 @@ class UserService:
             created_on=datetime.now(),
         )
         stored_user = self.repo.register_user(user)
-        return stored_user.to_dict()
+        return stored_user
 
     def _assign_roles_on_register(self, data):
         incoming = data.get("roles")
@@ -69,9 +65,7 @@ class UserService:
             created_on=existing["created_on"],
         )
         result = self.repo.update_a_user(user_id, updated_user)
-        if result:
-            return result.to_dict()
-        return None
+        return result
 
     def login(self, data):
         email = data.get("email")
@@ -79,9 +73,29 @@ class UserService:
 
 
         user = self.repo.fetch_user_by_email(email)
-        
+        if not user:
+            return None
 
-        return user.to_dict()
+        return user
 
     def has_role_access(self, user_id, allowed_roles):
-        return self.repo.has_role_access(user_id, allowed_roles)
+        """Check if user has any of the allowed roles."""
+        if not user_id:
+            return False
+
+        user = self.repo.fetch_a_single_user(user_id)
+        if not user:
+            return False
+
+        user_roles = user.get("roles", [])
+        if isinstance(user_roles, str):
+            user_roles = [user_roles]
+
+        if isinstance(allowed_roles, str):
+            allowed = {allowed_roles.strip().lower()}
+        else:
+            allowed = {str(role).strip().lower() for role in allowed_roles}
+
+        return any(str(role).strip().lower() in allowed for role in user_roles)
+
+   
