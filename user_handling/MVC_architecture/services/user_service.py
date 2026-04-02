@@ -2,8 +2,6 @@ from datetime import datetime
 from ..models.user_domain import User
 
 
-
-
 class UserService:
 
     roles = {"user", "manager", "staff", "supplier", "admin", "guest"}
@@ -24,23 +22,18 @@ class UserService:
         return self.repo.restore_deleted_user(user_id)
 
     def register(self, data):
-        # Validate registration data
-        is_valid, errors = validate_user_registration_data(data)
-        if not is_valid:
-            return {"error": "Validation failed", "details": errors}
-
         first_name = data.get("first_name")
         last_name = data.get("last_name")
         email = data.get("email")
-        password = hash_password(data.get("password"))  # Hash the password
-        roles = self._assign_roles_on_register(data)
+        password = data.get("password")
+        roles = data.get("roles")
 
         user = User(
             id=None,
             first_name=first_name,
             last_name=last_name,
             email=email,
-            password=password,  # Store hashed password
+            password=password,
             is_active=True,
             is_deleted=False,
             roles=roles,
@@ -59,20 +52,13 @@ class UserService:
 
     def update(self, user_id, data):
         existing = self.repo.fetch_a_single_user(user_id)
-        if not existing:
-            return {"error": "User not found"}
-
-        # Hash password if it's being updated
-        password = data.get("password")
-        if password:
-            password = hash_password(password)
-
+        
         updated_user = User(
             id=user_id,
             first_name=data.get("first_name", existing["first_name"]),
             last_name=data.get("last_name", existing["last_name"]),
             email=data.get("email", existing["email"]),
-            password=password or existing["password"],  # Use hashed password or existing
+            password=data.get("password", existing["password"]),
             is_active=data.get("is_active", existing["is_active"]),
             is_deleted=data.get("is_deleted", existing["is_deleted"]),
             roles=data.get("roles", existing["roles"]),
@@ -82,21 +68,13 @@ class UserService:
         return result
 
     def login(self, data):
-        # Validate login data
-        is_valid, errors = validate_user_login_data(data)
-        if not is_valid:
-            return {"error": "Validation failed", "details": errors}
-
         email = data.get("email")
         password = data.get("password")
 
+
         user = self.repo.fetch_user_by_email(email)
         if not user:
-            return {"error": "Invalid email or password"}
-
-        # Verify password against hash
-        if not verify_password(user.get("password"), password):
-            return {"error": "Invalid email or password"}
+            return None
 
         return user
 
