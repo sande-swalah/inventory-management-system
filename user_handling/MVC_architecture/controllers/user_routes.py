@@ -51,7 +51,7 @@ def login_user():
 
     return jsonify(user), 200
 
-@user_blueprint.route("/users/<int:user_id>", methods=["GET"])
+@user_blueprint.route("/users/<user_id>", methods=["GET"])
 @require_roles("manager", "staff", "admin")
 def get_user(user_id):
     user = user_controller.get_user(user_id)
@@ -60,7 +60,7 @@ def get_user(user_id):
     return jsonify({"error": "user not found"}), 404
 
 
-@user_blueprint.route("/users/<int:user_id>", methods=["PUT"])
+@user_blueprint.route("/users/<user_id>", methods=["PUT"])
 @require_roles("manager", "admin")
 def update_user(user_id):
     data = request.json

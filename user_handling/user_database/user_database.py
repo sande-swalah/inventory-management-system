@@ -12,8 +12,8 @@ def get_db():
     return g.db
 
 
-def close_db(e=None):
-    """Close the database connection at teardown."""
+def close_db(e):
+    """Close the database connection"""
     db = g.pop("db", None)
     if db is not None:
         db.close()

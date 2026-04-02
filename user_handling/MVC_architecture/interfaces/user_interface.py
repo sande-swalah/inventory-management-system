@@ -31,8 +31,3 @@ class UserInterface(ABC):
     def fetch_user_by_email(self, email):
         pass
 
-    @abstractmethod
-    def has_role_access(self, user_id, allowed_roles):
-        pass
-
-
