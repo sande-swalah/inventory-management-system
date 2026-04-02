@@ -21,8 +21,8 @@ def close_db(e):
 
 def init_db():
     """Initialize the database schema."""
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
+    db = sqlite3.connect(DATABASE)
+    cursor = db.cursor()
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS users (
@@ -38,9 +38,9 @@ def init_db():
         );
         """
     )
-    conn.commit()
+    db.commit()
     cursor.close()
-    conn.close()
+    db.close()
 
 
 def init_app(app):

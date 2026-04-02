@@ -11,8 +11,8 @@ def create_app():
     app.register_blueprint(user_blueprint, url_prefix="/api")
 
     @app.get("/")
-    def start_up():
-        return jsonify({"app is starting"}), 200
+    def starting():
+        return "app is starting"
 
     return app
 

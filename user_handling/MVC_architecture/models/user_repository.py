@@ -5,8 +5,8 @@ from user_handling.user_database import get_db
 
 class UserRepository:
     def register_user(self, user):
-        conn = get_db()
-        cursor = conn.cursor()
+        db = get_db()
+        cursor = db.cursor()
         cursor.execute(
             """
             INSERT INTO users (first_name, last_name, email, password, is_active, is_deleted, roles, created_on)
@@ -17,14 +17,14 @@ class UserRepository:
                 user.last_name,
                 user.email,
                 user.password,
-                int(user.is_active),
-                int(user.is_deleted),
-                json.dumps(user.roles),
+                user.is_active,
+                user.is_deleted,
+                user.roles,
                 user.created_on
             ),
         )
         user.id = cursor.lastrowid
-        conn.commit()
+        db.commit()
         return {
             "id": user.id,
             "first_name": user.first_name,
@@ -38,8 +38,8 @@ class UserRepository:
         }
 
     def fetch_a_single_user(self, user_id):
-        conn = get_db()
-        cursor = conn.cursor()
+        db = get_db()
+        cursor = db.cursor()
         cursor.execute("SELECT * FROM users WHERE id = ? AND is_deleted = 0", (user_id,))
         row = cursor.fetchone()
         if not row:
@@ -47,8 +47,8 @@ class UserRepository:
         return self._row_to_dict(row)
 
     def fetch_user_by_email(self, email):
-        conn = get_db()
-        cursor = conn.cursor()
+        db = get_db()
+        cursor = db.cursor()
         cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
         row = cursor.fetchone()
         if not row:
@@ -56,15 +56,15 @@ class UserRepository:
         return self._row_to_dict(row)
 
     def fetch_all_users(self):
-        conn = get_db()
-        cursor = conn.cursor()
+        db = get_db()
+        cursor = db.cursor()
         cursor.execute("SELECT * FROM users")
         rows = cursor.fetchall()
         return [self._row_to_dict(row) for row in rows]
 
     def update_a_user(self, user_id, updated_user):
-        conn = get_db()
-        cursor = conn.cursor()
+        db = get_db()
+        cursor = db.cursor()
         cursor.execute(
             """
             UPDATE users
@@ -78,26 +78,48 @@ class UserRepository:
                 updated_user.password,
                 updated_user.is_active,
                 updated_user.is_deleted,
-                updated_user.roles,
+                json.dumps(updated_user.roles) if isinstance(updated_user.roles, list) else updated_user.roles,
                 updated_user.created_on,
                 user_id,
             ),
         )
-        conn.commit()
+        db.commit()
         return self.fetch_a_single_user(user_id)
 
     def delete_a_user(self, user_id):
-        conn = get_db()
-        cursor = conn.cursor()
+        db = get_db()
+        cursor = db.cursor()
         cursor.execute("UPDATE users SET is_deleted = 1 WHERE id = ?", (user_id,))
-        conn.commit()
+        db.commit()
         return cursor.rowcount > 0
 
     def restore_deleted_user(self, user_id):
-        conn = get_db()
-        cursor = conn.cursor()
+        db = get_db()
+        cursor = db.cursor()
         cursor.execute("UPDATE users SET is_deleted = 0 WHERE id = ?", (user_id,))
-        conn.commit()
+        db.commit()
         return cursor.rowcount > 0
+
+    def _row_to_dict(self, row):
+        """Convert a database row to a dictionary."""
+        roles_str = row["roles"]
+        try:
+            roles = json.loads(roles_str) if roles_str else ["user"]
+        except (json.JSONDecodeError, TypeError):
+            # Handle legacy data or single role strings
+            roles = [roles_str] if roles_str else ["user"]
+        
+        
+        return {
+            "id": row["id"],
+            "first_name": row["first_name"],
+            "last_name": row["last_name"],
+            "email": row["email"],
+            "password": row["password"],
+            "is_active": bool(row["is_active"]),
+            "is_deleted": bool(row["is_deleted"]),
+            "roles": roles,
+            "created_on": row["created_on"],
+        }
 
    

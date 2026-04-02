@@ -7,25 +7,22 @@ from .user_controllers import user_controller
 user_blueprint = Blueprint("users", __name__)
 
 
-def require_roles(*roles):
-    """Decorator to check if user has required roles."""
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            # Get user_id from header or query param
-            user_id = request.args.get("user_id")
+# def require_roles(*roles):
+#     """Decorator to check if user has required roles."""
+#     def decorator(func):
+#         @wraps(func)
+#         def wrapper(*args, **kwargs):
+#             user_id = request.args.get("user_id")
 
-            if not user_id:
-                return jsonify({"error": "user_id missing in header or query param"}), 401
-
-           
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
+#             if not user_id:
+#                 return {"error": "user_id parameter required"}, 401
+#             return func(*args, **kwargs)
+#         return wrapper
+#     return decorator
 
 
 @user_blueprint.route("/users", methods=["GET"])
-@require_roles("manager", "staff", "admin")
+# @require_roles("manager", "staff", "admin")
 def get_all_users():
     return jsonify(user_controller.get_all_users()), 200
 
@@ -52,7 +49,7 @@ def login_user():
     return jsonify(user), 200
 
 @user_blueprint.route("/users/<user_id>", methods=["GET"])
-@require_roles("manager", "staff", "admin")
+# @require_roles("manager", "staff", "admin")
 def get_user(user_id):
     user = user_controller.get_user(user_id)
     if user:
@@ -61,28 +58,14 @@ def get_user(user_id):
 
 
 @user_blueprint.route("/users/<user_id>", methods=["PUT"])
-@require_roles("manager", "admin")
+# @require_roles("manager", "admin")
 def update_user(user_id):
+    print(f"Updating user with id: {user_id}")
     data = request.json
+    print(f"Update data: {data}")
     updated_user = user_controller.update(user_id, data)
     if updated_user:
         return jsonify(updated_user), 200
     return jsonify({"error": "user not found or update failed"}), 404
 
 
-@user_blueprint.route("/users/<int:user_id>", methods=["DELETE"])
-@require_roles("manager", "admin")
-def delete_user(user_id):
-    success = user_controller.delete(user_id)
-    if success:
-        return jsonify({"message": "user deleted successfully"}), 200
-    return jsonify({"error": "user not found or delete failed"}), 404
-
-
-@user_blueprint.route("/users/<int:user_id>/restore", methods=["POST"])
-@require_roles("manager", "admin")
-def restore_user(user_id):
-    success = user_controller.restore(user_id)
-    if success:
-        return jsonify({"message": "user restored successfully"}), 200
-    return jsonify({"error": "user not found or restore failed"}), 404

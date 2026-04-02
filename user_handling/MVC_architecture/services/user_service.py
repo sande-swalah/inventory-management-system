@@ -4,7 +4,7 @@ from ..models.user_domain import User
 
 class UserService:
 
-    roles = {"user", "manager", "staff", "supplier", "admin", "guest"}
+    roles = ["user", "manager", "staff", "supplier", "admin", "guest"]
 
     def __init__(self, repo):
         self.repo = repo
@@ -27,6 +27,9 @@ class UserService:
         email = data.get("email")
         password = data.get("password")
         roles = data.get("roles")
+
+        if roles is None:
+            roles = ["user"]
 
         user = User(
             id=None,
@@ -77,5 +80,13 @@ class UserService:
             return None
 
         return user
+
+    def check_user_roles(self, user_id, required_roles):
+        user = self.get_user(user_id)
+        if not user:
+            return False
+        
+        user_roles = user.get("roles", [])
+        return any(role in user_roles for role in required_roles)
 
     
