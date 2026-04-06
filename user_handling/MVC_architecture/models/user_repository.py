@@ -49,7 +49,7 @@ class UserRepository:
     def fetch_user_by_email(self, email):
         db = get_db()
         cursor = db.cursor()
-        cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+        cursor.execute("SELECT * FROM users WHERE email = ? AND is_deleted = 0", (email,))
         row = cursor.fetchone()
         if not row:
             return None

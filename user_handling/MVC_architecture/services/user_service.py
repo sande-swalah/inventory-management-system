@@ -74,9 +74,11 @@ class UserService:
         email = data.get("email")
         password = data.get("password")
 
-
         user = self.repo.fetch_user_by_email(email)
         if not user:
+            return None
+
+        if user.get("password") != password:
             return None
 
         return user
