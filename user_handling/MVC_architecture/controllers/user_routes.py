@@ -12,22 +12,41 @@ from ..user_validators.user_validators import (
 user_blueprint = Blueprint("users", __name__)
 
 
-# def require_roles(*roles):
-#     """Decorator to check if user has required roles."""
-#     def decorator(func):
-#         @wraps(func)
-#         def wrapper(*args, **kwargs):
-#             role = request.args.get("role")
-#             print(f"Required roles: {roles}")
-#             if role not in roles:
-#                 return jsonify({"error": "Unauthorized"}), 403
-#             return func(*args, **kwargs)
-#         return wrapper
-#     return decorator
+def require_roles(*roles):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            user_id = request.headers.get("roles")
+            # if not user_id:
+            #     return jsonify({"error": "no user found"}), 401
+
+            user = user_controller.get_user(user_id)
+            # if not user:
+            #     return jsonify({"error": "no user with that name"}), 401
+
+            user_roles = user.get("roles", [])
+            if not any(role in user_roles for role in roles):
+                return jsonify({"error": "Unauthorized"}), 403
+
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+user_blueprint.route( "/")
+def home():
+    return jsonify("You are currently in guest mode")
+
 
 
 @user_blueprint.route("/users", methods=["GET"])
-# @require_roles("manager", "staff", "admin")
+def welcome_user():
+    return jsonify("welcome to the app, would you like to register or login")
+
+
+
+@user_blueprint.route("/users/all_users", methods=["GET"])
+@require_roles("manager", "staff", "admin")
 def get_all_users():
     return jsonify(user_controller.get_all_users()), 200
 
@@ -62,7 +81,7 @@ def login_user():
     return jsonify(user), 200
 
 @user_blueprint.route("/users/<user_id>", methods=["GET"])
-# @require_roles("manager", "staff", "admin")
+@require_roles("manager", "staff", "admin")
 def get_user(user_id):
     user = user_controller.get_user(user_id)
     if user:
@@ -71,7 +90,7 @@ def get_user(user_id):
 
 
 @user_blueprint.route("/users/<user_id>", methods=["PUT"])
-# @require_roles("manager", "admin")
+@require_roles("manager", "admin")
 def update_user(user_id):
     print(f"Updating user with id: {user_id}")
     data = request.json or {}
@@ -85,5 +104,8 @@ def update_user(user_id):
     if updated_user:
         return jsonify(updated_user), 200
     return jsonify({"error": "user not found or update failed"}), 404
+
+
+    
 
 

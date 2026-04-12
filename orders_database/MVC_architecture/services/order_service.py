@@ -1,0 +1,25 @@
+from datetime import datetime
+
+from ..models.order_repository import OrderRepository
+
+
+class OrderService:
+    def __init__(self, repo):
+        self.repo = repo
+
+    def get_all_orders(self):
+        return self.repo.fetch_all_orders()
+
+    def get_order(self, order_id):
+        return self.repo.fetch_order(order_id)
+
+    def place_order(self, data):
+        order = {
+            "product_id": data["product_id"],
+            "quantity": data["quantity"],
+            "order_value": data.get("order_value", 0),
+            "status": data.get("status", "pending"),
+            "expected_delivery": data.get("expected_delivery"),
+            "created_on": datetime.now().isoformat(),
+        }
+        return self.repo.create_order(order)
