@@ -1,5 +1,5 @@
-from ..models.user_repository import UserRepository
-from ..services.user_service import UserService
+from ..models.user_repo.user_repository import UserRepository
+from ..Views.user_service import UserService
 
 
 class UserController:

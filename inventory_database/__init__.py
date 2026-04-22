@@ -1,1 +1,4 @@
-from .inventory_database import get_db, close_db, init_db, init_app
+def register_blueprints(app):
+    from inventory_database.MVC_architecture.controllers.inventory_routes import inventory_blueprint
+
+    app.register_blueprint(inventory_blueprint, url_prefix="/api")

@@ -10,6 +10,9 @@ class StoreService:
     def get_all_stores(self):
         return self.repo.fetch_all_stores()
 
+    def get_store(self, store_id):
+        return self.repo.fetch_store(store_id)
+
     def add_store(self, data):
         store = {
             "name": data["name"],
@@ -19,3 +22,9 @@ class StoreService:
             "created_on": datetime.now().isoformat(),
         }
         return self.repo.create_store(store)
+
+    def update_store(self, store_id, data):
+        return self.repo.update_store(store_id, data)
+
+    def remove_store(self, store_id):
+        return self.repo.delete_store(store_id)

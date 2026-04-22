@@ -1,48 +1,43 @@
-from orders_database import get_db
+from extensions import db
+from orders_database.MVC_architecture.models.order_domain import Order_Data
+from orders_database.MVC_architecture.models.order_schema import OrderSchema
 
 
 class OrderRepository:
+    def __init__(self):
+        self.schema = OrderSchema()
+        self.list_schema = OrderSchema(many=True)
+
     def fetch_all_orders(self):
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM orders")
-        rows = cursor.fetchall()
-        return [self._row_to_dict(row) for row in rows]
+        orders = Order_Data.query.order_by(Order_Data.id.asc()).all()
+        return self.list_schema.dump(orders)
 
     def fetch_order(self, order_id):
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM orders WHERE id = ?", (order_id,))
-        row = cursor.fetchone()
-        return self._row_to_dict(row) if row else None
+        order = db.session.get(Order_Data, int(order_id))
+        return self.schema.dump(order) if order else None
 
     def create_order(self, data):
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute(
-            """
-            INSERT INTO orders (product_id, quantity, order_value, status, expected_delivery, created_on)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            (
-                data["product_id"],
-                data["quantity"],
-                data["order_value"],
-                data.get("status", "pending"),
-                data.get("expected_delivery"),
-                data["created_on"],
-            ),
-        )
-        db.commit()
-        return self.fetch_order(cursor.lastrowid)
+        order = Order_Data(**data)
+        db.session.add(order)
+        db.session.commit()
+        return self.schema.dump(order)
 
-    def _row_to_dict(self, row):
-        return {
-            "id": row["id"],
-            "product_id": row["product_id"],
-            "quantity": row["quantity"],
-            "order_value": row["order_value"],
-            "status": row["status"],
-            "expected_delivery": row["expected_delivery"],
-            "created_on": row["created_on"],
-        }
+    def update_order(self, order_id, data):
+        order = db.session.get(Order_Data, int(order_id))
+        if not order:
+            return None
+
+        for field, value in data.items():
+            setattr(order, field, value)
+
+        db.session.commit()
+        return self.schema.dump(order)
+
+    def delete_order(self, order_id):
+        order = db.session.get(Order_Data, int(order_id))
+        if not order:
+            return False
+
+        db.session.delete(order)
+        db.session.commit()
+        return True

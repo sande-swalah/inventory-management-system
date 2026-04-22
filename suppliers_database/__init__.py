@@ -1,1 +1,4 @@
-from .supplier_database import get_db, close_db, init_db, init_app
+def register_blueprints(app):
+    from suppliers_database.MVC_architecture.controllers.supplier_routes import supplier_blueprint
+
+    app.register_blueprint(supplier_blueprint, url_prefix="/api")

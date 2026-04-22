@@ -1,50 +1,45 @@
-from suppliers_database import get_db
+from extensions import db
 
 
 class SupplierRepository:
+    def __init__(self):
+        from suppliers_database.MVC_architecture.models.supplier_domain import Supplier_Data
+        from suppliers_database.MVC_architecture.services.services_schema import SupplierSchema
+
+        self.model = Supplier_Data
+        self.schema = SupplierSchema()
+        self.list_schema = SupplierSchema(many=True)
+
     def fetch_all_suppliers(self):
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM suppliers")
-        rows = cursor.fetchall()
-        return [self._row_to_dict(row) for row in rows]
+        suppliers = self.model.query.order_by(self.model.id.asc()).all()
+        return self.list_schema.dump(suppliers)
 
     def fetch_supplier(self, supplier_id):
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM suppliers WHERE id = ?", (supplier_id,))
-        row = cursor.fetchone()
-        return self._row_to_dict(row) if row else None
+        supplier = db.session.get(self.model, int(supplier_id))
+        return self.schema.dump(supplier) if supplier else None
 
     def create_supplier(self, data):
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute(
-            """
-            INSERT INTO suppliers (name, product, category, contact_number, email, supplier_type, created_on)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                data["name"],
-                data.get("product"),
-                data.get("category"),
-                data.get("contact_number"),
-                data.get("email"),
-                data.get("supplier_type"),
-                data["created_on"],
-            ),
-        )
-        db.commit()
-        return self.fetch_supplier(cursor.lastrowid)
+        supplier = self.model(**data)
+        db.session.add(supplier)
+        db.session.commit()
+        return self.schema.dump(supplier)
 
-    def _row_to_dict(self, row):
-        return {
-            "id": row["id"],
-            "name": row["name"],
-            "product": row["product"],
-            "category": row["category"],
-            "contact_number": row["contact_number"],
-            "email": row["email"],
-            "supplier_type": row["supplier_type"],
-            "created_on": row["created_on"],
-        }
+    def update_supplier(self, supplier_id, data):
+        supplier = db.session.get(self.model, int(supplier_id))
+        if not supplier:
+            return None
+
+        for field, value in data.items():
+            setattr(supplier, field, value)
+
+        db.session.commit()
+        return self.schema.dump(supplier)
+
+    def delete_supplier(self, supplier_id):
+        supplier = db.session.get(self.model, int(supplier_id))
+        if not supplier:
+            return False
+
+        db.session.delete(supplier)
+        db.session.commit()
+        return True

@@ -10,6 +10,12 @@ class ReportController:
         self.service = service
         self.report_repo = report_repo
 
+    def get_all_reports(self):
+        return self.service.get_all_reports()
+
+    def get_report(self, report_id):
+        return self.service.get_report(report_id)
+
     def get_summary(self):
         return self.service.get_summary()
 
@@ -18,6 +24,12 @@ class ReportController:
 
     def snapshot(self, name):
         return self.service.create_report_snapshot(name)
+
+    def update_report(self, report_id, data):
+        return self.service.update_report(report_id, data)
+
+    def delete_report(self, report_id):
+        return self.service.remove_report(report_id)
 
 
 report_repository = ReportRepository()

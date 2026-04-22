@@ -1,85 +1,55 @@
-from products_database import get_db
+from marshmallow import ValidationError, fields, validate
+
+from extensions import db
+from products_database.MVC_architecture.models.product_domain import Product_Data
+from products_database.MVC_architecture.models.product_schema import ProductSchema
+
+product_schema = ProductSchema()
+list_product_schema = ProductSchema(many=True)
 
 
 class ProductRepository:
+    def create_product(self, data):
+        
+        try:
+            new_product = product_schema.load(data)
+        except ValidationError as err:
+            return {"error": err.messages}, 422
+        
+        db.session.add(new_product)
+        db.session.commit()
+        return product_schema.dump(new_product)
+
     def fetch_all_products(self):
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM products")
-        rows = cursor.fetchall()
-        return [self._row_to_dict(row) for row in rows]
+        products = Product_Data.query.order_by(Product_Data.id.asc()).all()
+        return list_product_schema.dump(products)
 
     def fetch_product(self, product_id):
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM products WHERE id = ?", (product_id,))
-        row = cursor.fetchone()
-        return self._row_to_dict(row) if row else None
+        product = db.session.get(Product_Data, int(product_id))
+        return product_schema.dump(product) if product else None
 
     def create_product(self, data):
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute(
-            """
-            INSERT INTO products (name, category, buying_price, quantity, threshold, expiry_date, supplier_id, created_on)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                data["name"],
-                data.get("category"),
-                data.get("buying_price", 0),
-                data.get("quantity", 0),
-                data.get("threshold", 0),
-                data.get("expiry_date"),
-                data.get("supplier_id"),
-                data["created_on"],
-            ),
-        )
-        db.commit()
-        return self.fetch_product(cursor.lastrowid)
+        product = Product_Data(**data)
+        db.session.add(product)
+        db.session.commit()
+        return product_schema.dump(product)
 
     def update_product(self, product_id, data):
-        existing = self.fetch_product(product_id)
-        if not existing:
+        product = db.session.get(Product_Data, int(product_id))
+        if not product:
             return None
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute(
-            """
-            UPDATE products
-            SET name = ?, category = ?, buying_price = ?, quantity = ?, threshold = ?, expiry_date = ?, supplier_id = ?
-            WHERE id = ?
-            """,
-            (
-                data.get("name", existing["name"]),
-                data.get("category", existing["category"]),
-                data.get("buying_price", existing["buying_price"]),
-                data.get("quantity", existing["quantity"]),
-                data.get("threshold", existing["threshold"]),
-                data.get("expiry_date", existing["expiry_date"]),
-                data.get("supplier_id", existing["supplier_id"]),
-                product_id,
-            ),
-        )
-        db.commit()
-        return self.fetch_product(product_id)
+
+        for field, value in data.items():
+            setattr(product, field, value)
+
+        db.session.commit()
+        return product_schema.dump(product)
 
     def delete_product(self, product_id):
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute("DELETE FROM products WHERE id = ?", (product_id,))
-        db.commit()
-        return cursor.rowcount > 0
+        product = db.session.get(Product_Data, int(product_id))
+        if not product:
+            return False
 
-    def _row_to_dict(self, row):
-        return {
-            "id": row["id"],
-            "name": row["name"],
-            "category": row["category"],
-            "buying_price": row["buying_price"],
-            "quantity": row["quantity"],
-            "threshold": row["threshold"],
-            "expiry_date": row["expiry_date"],
-            "supplier_id": row["supplier_id"],
-            "created_on": row["created_on"],
-        }
+        db.session.delete(product)
+        db.session.commit()
+        return True

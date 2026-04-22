@@ -23,3 +23,20 @@ def place_order():
     data = request.json or {}
     created = order_controller.place_order(data)
     return jsonify(created), 201
+
+
+@order_blueprint.route("/orders/<int:order_id>", methods=["PUT"])
+def update_order(order_id):
+    data = request.json or {}
+    updated = order_controller.update_order(order_id, data)
+    if updated:
+        return jsonify(updated), 200
+    return jsonify({"error": "Order not found"}), 404
+
+
+@order_blueprint.route("/orders/<int:order_id>", methods=["DELETE"])
+def delete_order(order_id):
+    deleted = order_controller.delete_order(order_id)
+    if deleted:
+        return jsonify({"message": "Order deleted"}), 200
+    return jsonify({"error": "Order not found"}), 404

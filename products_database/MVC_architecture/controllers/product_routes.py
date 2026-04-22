@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-
+from user_handling.MVC_architecture.utilities import 
 from .product_controllers import product_controller
 
 product_blueprint = Blueprint("products", __name__)

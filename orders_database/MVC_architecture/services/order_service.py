@@ -23,3 +23,9 @@ class OrderService:
             "created_on": datetime.now().isoformat(),
         }
         return self.repo.create_order(order)
+
+    def update_order(self, order_id, data):
+        return self.repo.update_order(order_id, data)
+
+    def remove_order(self, order_id):
+        return self.repo.delete_order(order_id)

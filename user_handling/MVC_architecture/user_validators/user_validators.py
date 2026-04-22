@@ -6,7 +6,7 @@ EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 def validate_email(email):
     if not email:
         return False, "Email is required"
-    if not isinstance(email) or not EMAIL_REGEX.match(email):
+    if not isinstance(email, str) or not EMAIL_REGEX.match(email):
         return False, "Email must be a valid email address"
     return True, None
 

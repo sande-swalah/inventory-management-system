@@ -13,6 +13,12 @@ class ReportService:
         self.order_repo = order_repo
         self.inventory_repo = inventory_repo
 
+    def get_all_reports(self):
+        return self.report_repo.fetch_all_reports()
+
+    def get_report(self, report_id):
+        return self.report_repo.fetch_report(report_id)
+
     def get_summary(self):
         products = self.product_repo.fetch_all_products()
         orders = self.order_repo.fetch_all_orders()
@@ -33,5 +39,10 @@ class ReportService:
             "summary": str(summary),
             "generated_on": datetime.now().isoformat(),
         }
-        self.report_repo.save_report(report)
-        return report
+        return self.report_repo.create_report(report)
+
+    def update_report(self, report_id, data):
+        return self.report_repo.update_report(report_id, data)
+
+    def remove_report(self, report_id):
+        return self.report_repo.delete_report(report_id)

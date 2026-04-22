@@ -15,6 +15,12 @@ class OrderController:
     def place_order(self, data):
         return self.service.place_order(data)
 
+    def update_order(self, order_id, data):
+        return self.service.update_order(order_id, data)
+
+    def delete_order(self, order_id):
+        return self.service.remove_order(order_id)
+
 
 order_repository = OrderRepository()
 order_service = OrderService(order_repository)
