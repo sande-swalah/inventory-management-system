@@ -16,7 +16,7 @@ def required_roles(*roles):
             #     return jsonify({"error": "no user with that name"}), 401
 
             user_roles = user.get("roles", [])
-            if isinstance(user_roles, str):
+            if isinstance(user_roles):
                 user_roles = [user_roles]
 
             normalized_roles = set()

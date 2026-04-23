@@ -8,18 +8,23 @@ def hash_password(plain:str):
 
     salt = os.urandom(16)
     digest = hashlib.pbkdf2_hmac(
-        hashname = 'sha256',
-        password= plain.encode(),
-        salt= salt,
+        hash_name='sha256',
+        password=plain.encode(),
+        salt=salt,
         iterations=100000)
     
-    return f"{salt.hex()}:{digest.hex()}"
+    return f"{salt.hex()}${digest.hex()}"
 
 def verify_password(stored_password:str, provided_password:str):
     try:
-       salt_hex, digest_hex = stored_password.split("$",1)
+       salt_hex, digest_hex = stored_password.split("$", 1)
        salt = bytes.fromhex(salt_hex)
        expected = bytes.fromhex(digest_hex)
-
+       actual = hashlib.pbkdf2_hmac(
+           hash_name='sha256',
+           password=provided_password.encode(),
+           salt=salt,
+           iterations=100000)
+       return hmac.compare_digest(actual, expected)
     except ValueError:
         return False

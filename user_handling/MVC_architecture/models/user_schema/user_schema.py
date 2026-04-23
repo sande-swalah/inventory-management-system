@@ -16,5 +16,6 @@ class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = User_Data
         load_instance = True
+        exclude = ("password",)
 
 
