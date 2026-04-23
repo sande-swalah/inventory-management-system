@@ -1,4 +1,5 @@
 from extensions import db
+from sqlalchemy.exc import IntegrityError, StatementError
 from inventory_database.MVC_architecture.models.inventory_domain import Inventory_Data
 from products_database.MVC_architecture.models.product_domain import Product_Data
 from products_database.MVC_architecture.models.product_schema import ProductSchema
@@ -30,7 +31,11 @@ class InventoryRepository:
     def create_item(self, data):
         item = Inventory_Data(**data)
         db.session.add(item)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except (IntegrityError, StatementError):
+            db.session.rollback()
+            raise ValueError("Invalid inventory data")
         return inventory_schema.dump(item)
 
     def update_item(self, item_id, data):
@@ -41,7 +46,11 @@ class InventoryRepository:
         for field, value in data.items():
             setattr(item, field, value)
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except (IntegrityError, StatementError):
+            db.session.rollback()
+            raise ValueError("Invalid inventory data")
         return inventory_schema.dump(item)
 
     def delete_item(self, item_id):

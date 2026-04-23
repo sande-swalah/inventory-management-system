@@ -30,21 +30,21 @@ class UserAuthService:
 
         token = generate_token(
             user_id=create_user.id,
-            roles=create_user.roles
+            roles=create_user.roles.value if hasattr(create_user.roles, "value") else str(create_user.roles)
         )
         return {"user": user_schema.dump(create_user), "token": token}, 201
 
 
     def login(self, data):
 
-        user = self.repo.fetch_user_by_email(data.get("email"))
+        user = self.repo.fetch_user_for_auth(data.get("email"))
 
         if not user or not user.check_password(data.get("password")):
             return {"error": "Invalid email or password"}, 401
 
         token = generate_token(
             user_id=user.id,
-            roles=user.roles
+            roles=user.roles.value if hasattr(user.roles, "value") else str(user.roles)
         )
         return {"user": user_schema.dump(user), "token": token}, 200
 

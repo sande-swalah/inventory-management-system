@@ -1,4 +1,5 @@
 from extensions import db
+from sqlalchemy.exc import IntegrityError, StatementError
 from manage_store_database.MVC_architecture.models.store_domain import Store_Data
 from manage_store_database.MVC_architecture.models.store_schema import StoreSchema
 from products_database.MVC_architecture.models.product_domain import Product_Data
@@ -21,7 +22,11 @@ class StoreRepository:
             record.products = Product_Data.query.filter(Product_Data.id.in_(store["product_ids"])).all()
 
         db.session.add(record)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except (IntegrityError, StatementError):
+            db.session.rollback()
+            raise ValueError("Invalid store data")
         return self.schema.dump(record)
 
     def fetch_store(self, store_id):
@@ -41,7 +46,11 @@ class StoreRepository:
         if isinstance(data.get("product_ids"), list):
             record.products = Product_Data.query.filter(Product_Data.id.in_(data["product_ids"])).all()
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except (IntegrityError, StatementError):
+            db.session.rollback()
+            raise ValueError("Invalid store data")
         return self.schema.dump(record)
 
     def delete_store(self, store_id):

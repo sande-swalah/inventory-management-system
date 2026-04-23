@@ -99,7 +99,11 @@ def update_user(user_id):
     if not is_valid:
         return jsonify({"errors": errors}), 400
 
-    updated_user = user_controller.update(user_id, data)
+    try:
+        updated_user = user_controller.update(user_id, data)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
     if updated_user:
         return jsonify(updated_user), 200
     return jsonify({"error": "user not found or update failed"}), 404

@@ -29,18 +29,23 @@ def get_report_history():
 
 
 @report_blueprint.route("/snapshot", methods=["POST"])
-@report_blueprint.route("/reports/snapshot", methods=["POST"])
 def create_report_snapshot():
     data = request.json or {}
     name = data.get("name", "Snapshot")
-    created = report_controller.snapshot(name)
+    try:
+        created = report_controller.snapshot(name)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
     return jsonify(created), 201
 
 
 @report_blueprint.route("/<int:report_id>", methods=["PUT"])
 def update_report(report_id):
     data = request.json or {}
-    updated = report_controller.update_report(report_id, data)
+    try:
+        updated = report_controller.update_report(report_id, data)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
     if updated:
         return jsonify(updated), 200
     return jsonify({"error": "Report not found"}), 404

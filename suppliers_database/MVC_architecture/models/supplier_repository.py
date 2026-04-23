@@ -1,4 +1,5 @@
 from extensions import db
+from sqlalchemy.exc import IntegrityError
 
 
 class SupplierRepository:
@@ -21,7 +22,11 @@ class SupplierRepository:
     def create_supplier(self, data):
         supplier = self.model(**data)
         db.session.add(supplier)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            raise ValueError("Supplier email already exists")
         return self.schema.dump(supplier)
 
     def update_supplier(self, supplier_id, data):
@@ -32,7 +37,11 @@ class SupplierRepository:
         for field, value in data.items():
             setattr(supplier, field, value)
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            raise ValueError("Supplier email already exists")
         return self.schema.dump(supplier)
 
     def delete_supplier(self, supplier_id):

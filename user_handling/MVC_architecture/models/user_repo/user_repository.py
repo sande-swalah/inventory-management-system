@@ -1,5 +1,6 @@
 from extensions import db
 from marshmallow import ValidationError
+from sqlalchemy.exc import IntegrityError, StatementError
 
 from user_handling.MVC_architecture.models.user_domain.user_domain import User_Data
 from user_handling.MVC_architecture.models.user_schema.user_schema import UserSchema
@@ -33,6 +34,9 @@ class UserRepository:
         user = User_Data.query.filter_by(email=email, is_deleted=False).first()
         return user_schema.dump(user) if user else None
 
+    def fetch_user_for_auth(self, email):
+        return User_Data.query.filter_by(email=email, is_deleted=False).first()
+
     def fetch_all_users(self):
         users = User_Data.query.order_by(User_Data.id.asc()).all()
         return list_user_schema.dump(users)
@@ -45,7 +49,11 @@ class UserRepository:
         for field, value in updated_user.items():
             setattr(user, field, value)
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except (IntegrityError, StatementError):
+            db.session.rollback()
+            raise ValueError("Invalid user update data")
         return user_schema.dump(user)
 
     def delete_a_user(self, user_id):

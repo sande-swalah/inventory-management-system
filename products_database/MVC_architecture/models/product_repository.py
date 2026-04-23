@@ -1,4 +1,5 @@
 from extensions import db
+from sqlalchemy.exc import IntegrityError, StatementError
 from products_database.MVC_architecture.models.product_domain import Product_Data
 from products_database.MVC_architecture.models.product_schema import ProductSchema
 from manage_store_database.MVC_architecture.models.store_domain import Store_Data
@@ -29,7 +30,11 @@ class ProductRepository:
         product = Product_Data(**payload)
         self._apply_links(product, data)
         db.session.add(product)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except (IntegrityError, StatementError):
+            db.session.rollback()
+            raise ValueError("Invalid product data")
         return product_schema.dump(product)
 
     def update_product(self, product_id, data):
@@ -44,7 +49,11 @@ class ProductRepository:
 
         self._apply_links(product, data)
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except (IntegrityError, StatementError):
+            db.session.rollback()
+            raise ValueError("Invalid product data")
         return product_schema.dump(product)
 
     def delete_product(self, product_id):

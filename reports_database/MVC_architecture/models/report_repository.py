@@ -1,5 +1,6 @@
 
 from extensions import db
+from sqlalchemy.exc import IntegrityError, StatementError
 from reports_database.MVC_architecture.models.report_domain import Report_Data
 from reports_database.MVC_architecture.models.report_schema import ReportSchema
 
@@ -15,7 +16,11 @@ class ReportRepository:
     def create_report(self, report):
         record = Report_Data(**report)
         db.session.add(record)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except (IntegrityError, StatementError):
+            db.session.rollback()
+            raise ValueError("Invalid report data")
         return self.schema.dump(record)
 
     def fetch_all_reports(self):
@@ -34,7 +39,11 @@ class ReportRepository:
         for field, value in data.items():
             setattr(record, field, value)
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except (IntegrityError, StatementError):
+            db.session.rollback()
+            raise ValueError("Invalid report data")
         return self.schema.dump(record)
 
     def delete_report(self, report_id):

@@ -78,37 +78,66 @@ class UserService:
         if not existing:
             return None
 
-        role_value = existing["roles"]
-        if "roles" in data:
-            role_value = self._assign_roles_on_register({"roles": data.get("roles")})
-        
-        updated_user = {
-            "first_name": data.get("first_name", existing["first_name"]),
-            "last_name": data.get("last_name", existing["last_name"]),
-            "email": data.get("email", existing["email"]),
-            "password": data.get("password", existing.get("password")),
-            "is_active": data.get("is_active", existing["is_active"]),
-            "is_deleted": data.get("is_deleted", existing["is_deleted"]),
-            "roles": role_value,
+        if not data:
+            raise ValueError("No update data provided")
+
+        allowed_fields = {
+            "first_name",
+            "last_name",
+            "email",
+            "password",
+            "is_active",
+            "is_deleted",
+            "roles",
         }
+
+        for field in data:
+            if field not in allowed_fields:
+                raise ValueError(f"Unknown field: {field}")
+
+        updated_user = {}
+
+        if "first_name" in data:
+            updated_user["first_name"] = data.get("first_name")
+        if "last_name" in data:
+            updated_user["last_name"] = data.get("last_name")
+        if "email" in data:
+            updated_user["email"] = data.get("email")
+        if "is_active" in data:
+            updated_user["is_active"] = data.get("is_active")
+        if "is_deleted" in data:
+            updated_user["is_deleted"] = data.get("is_deleted")
+        if "roles" in data:
+            updated_user["roles"] = self._assign_roles_on_register({"roles": data.get("roles")})
+
+        # Preserve current password hash unless a new password is explicitly provided.
+        if "password" in data:
+            raw_password = data.get("password")
+            if not raw_password:
+                raise ValueError("Password cannot be empty")
+            updated_user["password"] = hash_password(raw_password)
+
         return self.repo.update_a_user(user_id, updated_user)
 
     def login(self, data):
         email = data.get("email")
         password = data.get("password")
 
-        user = self.repo.fetch_user_by_email(email)
-        if not user:
+        user_obj = self.repo.fetch_user_for_auth(email)
+        if not user_obj:
             return None
 
-        if not verify_password(user.get("password"), password):
+        if not verify_password(user_obj.password, password):
             return None
 
+        from ..models.user_schema.user_schema import UserSchema
+        user_dict = UserSchema().dump(user_obj)
+        roles_value = user_obj.roles.value if hasattr(user_obj.roles, "value") else str(user_obj.roles)
         token = generate_token(
-            user_id=user["id"],
-            roles=user["roles"]
+            user_id=user_obj.id,
+            roles=roles_value
         )
-        return {"user": user, "token": token}
+        return {"user": user_dict, "token": token}
 
     def check_user_roles(self, user_id, required_roles):
         user = self.get_user(user_id)

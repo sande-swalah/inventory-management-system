@@ -1,4 +1,5 @@
 from extensions import db
+from sqlalchemy.exc import IntegrityError, StatementError
 from orders_database.MVC_architecture.models.order_domain import Order_Data
 from orders_database.MVC_architecture.models.order_schema import OrderSchema
 from products_database.MVC_architecture.models.product_domain import Product_Data
@@ -28,7 +29,11 @@ class OrderRepository:
                 order.product_id = products[0].id
 
         db.session.add(order)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except (IntegrityError, StatementError):
+            db.session.rollback()
+            raise ValueError("Invalid order data")
         return self.schema.dump(order)
 
     def update_order(self, order_id, data):
@@ -47,7 +52,11 @@ class OrderRepository:
             if products and not data.get("product_id"):
                 order.product_id = products[0].id
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except (IntegrityError, StatementError):
+            db.session.rollback()
+            raise ValueError("Invalid order data")
         return self.schema.dump(order)
 
     def delete_order(self, order_id):
