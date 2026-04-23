@@ -10,6 +10,9 @@ class InventoryService:
     def get_all_items(self):
         return self.repo.fetch_all_items()
 
+    def get_inventory_products(self):
+        return self.repo.fetch_inventory_products()
+
     def get_item(self, item_id):
         return self.repo.fetch_item(item_id)
 

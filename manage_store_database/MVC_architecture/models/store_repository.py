@@ -1,6 +1,7 @@
 from extensions import db
 from manage_store_database.MVC_architecture.models.store_domain import Store_Data
 from manage_store_database.MVC_architecture.models.store_schema import StoreSchema
+from products_database.MVC_architecture.models.product_domain import Product_Data
 
 
 class StoreRepository:
@@ -13,7 +14,12 @@ class StoreRepository:
         return self.list_schema.dump(stores)
 
     def create_store(self, store):
-        record = Store_Data(**store)
+        payload = {k: v for k, v in store.items() if k != "product_ids"}
+        record = Store_Data(**payload)
+
+        if isinstance(store.get("product_ids"), list):
+            record.products = Product_Data.query.filter(Product_Data.id.in_(store["product_ids"])).all()
+
         db.session.add(record)
         db.session.commit()
         return self.schema.dump(record)
@@ -28,7 +34,12 @@ class StoreRepository:
             return None
 
         for field, value in data.items():
+            if field == "product_ids":
+                continue
             setattr(record, field, value)
+
+        if isinstance(data.get("product_ids"), list):
+            record.products = Product_Data.query.filter(Product_Data.id.in_(data["product_ids"])).all()
 
         db.session.commit()
         return self.schema.dump(record)

@@ -19,6 +19,7 @@ class StoreService:
             "address": data["address"],
             "contact_number": data.get("contact_number"),
             "email": data.get("email"),
+            "product_ids": data.get("product_ids", []),
             "created_on": datetime.now().isoformat(),
         }
         return self.repo.create_store(store)

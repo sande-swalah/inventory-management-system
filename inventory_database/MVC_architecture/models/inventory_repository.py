@@ -1,108 +1,69 @@
-from flask import jsonify
-from marshmallow import ValidationError
-
 from extensions import db
 from inventory_database.MVC_architecture.models.inventory_domain import Inventory_Data
+from products_database.MVC_architecture.models.product_domain import Product_Data
+from products_database.MVC_architecture.models.product_schema import ProductSchema
 from inventory_database.MVC_architecture.schemas.inventory_schema import InventorySchema
 
 
 inventory_schema = InventorySchema()
 list_inventory_schema = InventorySchema(many=True)
+list_product_schema = ProductSchema(many=True)
 
 class InventoryRepository:
+    def fetch_all_items(self):
+        items = Inventory_Data.query.order_by(Inventory_Data.id.asc()).all()
+        return list_inventory_schema.dump(items)
+
+    def fetch_item(self, item_id):
+        item = db.session.get(Inventory_Data, int(item_id))
+        return inventory_schema.dump(item) if item else None
+
+    def fetch_inventory_products(self):
+        products = (
+            Product_Data.query.join(Inventory_Data, Inventory_Data.product_id == Product_Data.id)
+            .distinct(Product_Data.id)
+            .order_by(Product_Data.id.asc())
+            .all()
+        )
+        return list_product_schema.dump(products)
+
+    def create_item(self, data):
+        item = Inventory_Data(**data)
+        db.session.add(item)
+        db.session.commit()
+        return inventory_schema.dump(item)
+
+    def update_item(self, item_id, data):
+        item = db.session.get(Inventory_Data, int(item_id))
+        if not item:
+            return None
+
+        for field, value in data.items():
+            setattr(item, field, value)
+
+        db.session.commit()
+        return inventory_schema.dump(item)
+
+    def delete_item(self, item_id):
+        item = db.session.get(Inventory_Data, int(item_id))
+        if not item:
+            return False
+
+        db.session.delete(item)
+        db.session.commit()
+        return True
 
     def create_data(self, obj):
-        try:
-            new_data = inventory_schema.load(
-                obj
-            )
-        except ValidationError as err:
-            return jsonify({
-                "err": err.messages
-            }), 422
-        
-        db.session.add(new_data)
-        db.session.commit()
-
-        return inventory_schema.dump(new_data)
+        return self.create_item(obj)
     
     def read_data(self, id):
-        try:
-            new_data = inventory_schema.load(
-                {"id": id}
-            )
-        except ValidationError as err:
-            return jsonify({
-                "err": err.messages
-            }), 422
-
-        return inventory_schema.dump(new_data)
+        return self.fetch_item(id)
     
     def read_all_data(self):
-        try:
-            new_data = list_inventory_schema.load()
-
-            return list_inventory_schema.dump(new_data)
-        
-        except ValidationError as err:
-            return jsonify({
-              "err": err.messages
-                }), 422 
+        return self.fetch_all_items()
         
     def update_data(self, id, obj):
-        try:
-            new_data = inventory_schema.load(
-                {"id": id}
-            )
-        except ValidationError as err:
-            return jsonify({
-                "err": err.messages
-            }), 422
-
-        if not new_data:
-            return jsonify({
-                "err": "Data not found"
-            }), 404
-        
-        try:    
-            updated_data = inventory_schema.load(
-                obj
-            )
-        except ValidationError as err:
-            return jsonify({
-                "err": err.messages
-            }), 422
-        
-        
-        new_data.id = updated_data.id
-        new_data.product_id = updated_data.product_id
-        new_data.store_id = updated_data.store_id
-        new_data.quantity = updated_data.quantity
-        new_data.threshold = updated_data.threshold
-        new_data.last_updated = updated_data.last_updated
-
-    
-   
-        db.session.commit()
-        
-        return inventory_schema.dump(new_data)
+        return self.update_item(id, obj)
     
     def delete_data(self, id):
-        try:
-            new_data = inventory_schema.load(
-                {"id": id}
-            )
-        except ValidationError as err:
-            return jsonify({
-                "err": err.messages
-            }), 422
-
-        if not new_data:
-            return jsonify({
-                "err": "Data not found"
-            }), 404
-
-        db.session.delete(new_data)
-        db.session.commit()
-
-        return inventory_schema.dump(new_data)
+        return self.delete_item(id)

@@ -1,8 +1,8 @@
 from app import app
+from app_blueprints import register_all_blueprints
 from extensions.extensions import db
-from user_handling import create_app_for_user_handling
 
-app = create_app_for_user_handling(app)
+register_all_blueprints(app)
 
 
 if __name__ == "__main__":

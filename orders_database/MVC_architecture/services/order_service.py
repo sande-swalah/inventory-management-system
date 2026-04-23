@@ -16,6 +16,8 @@ class OrderService:
     def place_order(self, data):
         order = {
             "product_id": data["product_id"],
+            "user_id": data.get("user_id"),
+            "product_ids": data.get("product_ids", [data["product_id"]]),
             "quantity": data["quantity"],
             "order_value": data.get("order_value", 0),
             "status": data.get("status", "pending"),

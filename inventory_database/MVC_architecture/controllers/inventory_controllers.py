@@ -9,6 +9,9 @@ class InventoryController:
     def get_all_items(self):
         return self.service.get_all_items()
 
+    def get_inventory_products(self):
+        return self.service.get_inventory_products()
+
     def get_item(self, item_id):
         return self.service.get_item(item_id)
 

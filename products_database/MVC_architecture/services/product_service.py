@@ -16,12 +16,14 @@ class ProductService:
     def add_product(self, data):
         product = {
             "name": data["name"],
-            "category": data.get("category"),
             "buying_price": data.get("buying_price", 0),
             "quantity": data.get("quantity", 0),
             "threshold": data.get("threshold", 0),
             "expiry_date": data.get("expiry_date"),
             "supplier_id": data.get("supplier_id"),
+            "category_ids": data.get("category_ids", []),
+            "store_ids": data.get("store_ids", []),
+            "order_ids": data.get("order_ids", []),
             "created_on": datetime.now().isoformat(),
         }
         return self.repo.create_product(product)

@@ -1,24 +1,20 @@
-from marshmallow import ValidationError, fields, validate
-
 from extensions import db
 from products_database.MVC_architecture.models.product_domain import Product_Data
 from products_database.MVC_architecture.models.product_schema import ProductSchema
+from manage_store_database.MVC_architecture.models.store_domain import Store_Data
+from orders_database.MVC_architecture.models.order_domain import Order_Data
 
 product_schema = ProductSchema()
 list_product_schema = ProductSchema(many=True)
 
 
 class ProductRepository:
-    def create_product(self, data):
-        
-        try:
-            new_product = product_schema.load(data)
-        except ValidationError as err:
-            return {"error": err.messages}, 422
-        
-        db.session.add(new_product)
-        db.session.commit()
-        return product_schema.dump(new_product)
+    def _apply_links(self, product, data):
+        if isinstance(data.get("store_ids"), list):
+            product.stores = Store_Data.query.filter(Store_Data.id.in_(data["store_ids"])).all()
+
+        if isinstance(data.get("order_ids"), list):
+            product.order_links = Order_Data.query.filter(Order_Data.id.in_(data["order_ids"])).all()
 
     def fetch_all_products(self):
         products = Product_Data.query.order_by(Product_Data.id.asc()).all()
@@ -29,7 +25,9 @@ class ProductRepository:
         return product_schema.dump(product) if product else None
 
     def create_product(self, data):
-        product = Product_Data(**data)
+        payload = {k: v for k, v in data.items() if k not in {"store_ids", "order_ids"}}
+        product = Product_Data(**payload)
+        self._apply_links(product, data)
         db.session.add(product)
         db.session.commit()
         return product_schema.dump(product)
@@ -40,7 +38,11 @@ class ProductRepository:
             return None
 
         for field, value in data.items():
+            if field in {"store_ids", "order_ids"}:
+                continue
             setattr(product, field, value)
+
+        self._apply_links(product, data)
 
         db.session.commit()
         return product_schema.dump(product)

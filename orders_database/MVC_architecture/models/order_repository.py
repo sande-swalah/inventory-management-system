@@ -1,6 +1,7 @@
 from extensions import db
 from orders_database.MVC_architecture.models.order_domain import Order_Data
 from orders_database.MVC_architecture.models.order_schema import OrderSchema
+from products_database.MVC_architecture.models.product_domain import Product_Data
 
 
 class OrderRepository:
@@ -17,7 +18,15 @@ class OrderRepository:
         return self.schema.dump(order) if order else None
 
     def create_order(self, data):
-        order = Order_Data(**data)
+        payload = {k: v for k, v in data.items() if k != "product_ids"}
+        order = Order_Data(**payload)
+
+        if isinstance(data.get("product_ids"), list):
+            products = Product_Data.query.filter(Product_Data.id.in_(data["product_ids"])).all()
+            order.products = products
+            if products and not payload.get("product_id"):
+                order.product_id = products[0].id
+
         db.session.add(order)
         db.session.commit()
         return self.schema.dump(order)
@@ -28,7 +37,15 @@ class OrderRepository:
             return None
 
         for field, value in data.items():
+            if field == "product_ids":
+                continue
             setattr(order, field, value)
+
+        if isinstance(data.get("product_ids"), list):
+            products = Product_Data.query.filter(Product_Data.id.in_(data["product_ids"])).all()
+            order.products = products
+            if products and not data.get("product_id"):
+                order.product_id = products[0].id
 
         db.session.commit()
         return self.schema.dump(order)

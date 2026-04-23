@@ -32,12 +32,13 @@ class ReportService:
         }
         return summary
 
-    def create_report_snapshot(self, name):
+    def create_report_snapshot(self, name, generated_for_user_id=None):
         summary = self.get_summary()
         report = {
             "name": name,
             "summary": str(summary),
             "generated_on": datetime.now().isoformat(),
+            "generated_for_user_id": generated_for_user_id,
         }
         return self.report_repo.create_report(report)
 

@@ -1,8 +1,8 @@
 from flask import Flask, jsonify
 
-from app_setup import register_models
+from app_models import register_models
 from config.config import Config
-from extensions.extensions import db, migrate, ma
+from extensions.extensions import db, migrate
 
 
 def create_app():

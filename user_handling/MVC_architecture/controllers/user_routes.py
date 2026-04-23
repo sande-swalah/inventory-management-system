@@ -9,7 +9,7 @@ from ..user_validators.user_validators import (
     validate_update_data,
 )
 
-user_blueprint = Blueprint("users", __name__, url_prefix="/users")
+user_blueprint = Blueprint("users", __name__, url_prefix="/user")
 
 
 

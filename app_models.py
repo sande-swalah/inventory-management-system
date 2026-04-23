@@ -1,5 +1,5 @@
 def register_models():
-    from inventory_database.MVC_architecture.models.inventory_domain import Inventory_Data 
+    from inventory_database.MVC_architecture.models.inventory_domain import Inventory_Data
     from manage_store_database.MVC_architecture.models.store_domain import Store_Data  
     from orders_database.MVC_architecture.models.order_domain import Order_Data 
     from products_database.MVC_architecture.models.product_domain import Product_Data  
